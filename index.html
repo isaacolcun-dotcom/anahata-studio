@@ -14,7 +14,7 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Lato',sans-serif;background:#FAF6F1;color:#3D2B1F;min-height:100vh}
-:root{--pri:#C4856A;--sec:#8FAF8F;--dark:#3D2B1F;--muted:#9B8B7E;--acc:#E8D5C4;--white:#FFFFFF;--yoga:#FBF5EE;--yogab:#E8D5C4;--pole:#EEF5F5;--poleb:#C5DDD9}
+:root{--pri:#C4856A;--sec:#8FAF8F;--dark:#3D2B1F;--muted:#9B8B7E;--acc:#E8D5C4;--white:#FFFFFF;--yoga:#FBF5EE;--yogab:#E8D5C4;--pole:#EEF5F5;--poleb:#C5DDD9;--danger:#C45A5A;--dangerBg:#FFF0F0}
 input,select,button,textarea{font-family:'Lato',sans-serif}
 ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:#F0E8E0}::-webkit-scrollbar-thumb{background:var(--pri);border-radius:4px}
 .inp{border:1.5px solid var(--acc);border-radius:8px;padding:10px 14px;font-size:13px;outline:none;width:100%;background:#FFFDF9;color:var(--dark);transition:border-color .2s}
@@ -74,7 +74,7 @@ h1.pg{font-family:'Playfair Display',serif;font-size:26px;color:var(--dark);marg
 .receipt-row{display:grid;grid-template-columns:120px 1fr 130px 90px 130px 110px;gap:0;align-items:center;padding:13px 18px;border-top:1px solid #F0E8E0;font-size:13px}
 .receipt-hdr{background:#F5F0EB;padding:9px 18px;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:grid;grid-template-columns:120px 1fr 130px 90px 130px 110px}
 .folio-badge{display:inline-block;background:#FBF0E8;border-radius:6px;padding:4px 10px;font-size:10px;letter-spacing:1px;color:var(--pri);font-weight:700;font-family:monospace}
-.modal-box{background:var(--white);border-radius:16px;width:100%;max-width:460px;padding:26px;animation:fadeUp .22s ease;max-height:90vh;overflow-y:auto}
+.modal-box{background:var(--white);border-radius:16px;width:100%;max-width:480px;padding:26px;animation:fadeUp .22s ease;max-height:92vh;overflow-y:auto}
 .modal-title{font-family:'Playfair Display',serif;font-size:19px;color:var(--dark);margin-bottom:18px;display:flex;justify-content:space-between;align-items:center}
 .form-group{margin-bottom:13px}
 .form-label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:4px}
@@ -102,6 +102,16 @@ h1.pg{font-family:'Playfair Display',serif;font-size:26px;color:var(--dark);marg
 .spinner{width:32px;height:32px;border:3px solid var(--acc);border-top-color:var(--pri);border-radius:50%;animation:spin .8s linear infinite;margin-bottom:16px}
 .loading-lbl{font-family:'Playfair Display',serif;font-size:18px;color:var(--pri)}
 .loading-sub{font-size:12px;color:var(--muted);margin-top:6px}
+/* Pkg item row in student detail */
+.pkg-row{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;margin-bottom:8px;border:1.5px solid var(--acc);background:#FFFDF9}
+.pkg-row-info{flex:1}
+.pkg-row-name{font-weight:700;font-size:13px}
+.pkg-row-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.pkg-bar-wrap{background:#F0EBE5;border-radius:10px;height:6px;margin-top:6px;overflow:hidden}
+.pkg-bar{height:6px;border-radius:10px;background:var(--sec);transition:width .4s}
+/* Danger zone */
+.danger-zone{margin-top:20px;padding-top:16px;border-top:1px dashed #FFAAAA}
+.danger-title{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--danger);margin-bottom:10px}
 @media(max-width:700px){.stats-grid{grid-template-columns:1fr 1fr}.pkg-grid{grid-template-columns:1fr}.receipt-row,.receipt-hdr{grid-template-columns:100px 1fr auto}.week-lbl{min-width:150px;font-size:11px}}
 </style>
 </head>
@@ -117,7 +127,7 @@ h1.pg{font-family:'Playfair Display',serif;font-size:26px;color:var(--dark);marg
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <script>
-// ── Tu configuración Firebase (hanahata-79d88) ─────────────────────
+// ── Firebase config ────────────────────────────────────────────────
 firebase.initializeApp({
   apiKey:            "AIzaSyDh5Tf348VS71KfQOocRSnYq1q9Q5YqYpo",
   authDomain:        "hanahata-79d88.firebaseapp.com",
@@ -129,7 +139,7 @@ firebase.initializeApp({
 const db = firebase.firestore();
 db.enablePersistence({synchronizeTabs:true}).catch(()=>{});
 
-// ── Datos de la app ────────────────────────────────────────────────
+// ── Constantes ─────────────────────────────────────────────────────
 const PKG = {
   '12':{label:'12 Clases',   price:800,classes:12,color:'#8FAF8F'},
   '8': {label:'8 Clases',    price:600,classes:8, color:'#C4856A'},
@@ -161,8 +171,7 @@ const dKey=d=>d.toISOString().slice(0,10);
 let S={tab:'dashboard',students:[],attendance:{},receipts:[],weekStart:getMonday(new Date()),modal:null};
 let saveT=null,remoteUpd=false;
 
-// ── Firestore sync ─────────────────────────────────────────────────
-document.getElementById('loading-msg').textContent='Cargando datos...';
+// ── Firestore ──────────────────────────────────────────────────────
 db.collection('estudio').doc('principal').onSnapshot(snap=>{
   document.getElementById('loading-screen').style.display='none';
   document.getElementById('app').style.display='flex';
@@ -173,7 +182,7 @@ db.collection('estudio').doc('principal').onSnapshot(snap=>{
     remoteUpd=false;
   }
   render();setStatus(navigator.onLine?'online':'offline');
-},err=>{
+},()=>{
   document.getElementById('loading-msg').textContent='Error de conexión, reintentando...';
   setTimeout(()=>location.reload(),4000);
 });
@@ -192,7 +201,6 @@ function save(){
     }catch(e){setStatus('offline');}
   },800);
 }
-
 function setStatus(t){
   const b=document.getElementById('status-bar');if(!b)return;
   b.className=t;b.id='status-bar';
@@ -201,16 +209,21 @@ function setStatus(t){
 window.addEventListener('online',()=>setStatus('online'));
 window.addEventListener('offline',()=>setStatus('offline'));
 
-// ── PWA install ────────────────────────────────────────────────────
 let dp=null;
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();dp=e;const b=document.getElementById('install-btn');if(b)b.classList.add('show');});
 function installApp(){if(!dp)return;dp.prompt();dp.userChoice.then(()=>{dp=null;const b=document.getElementById('install-btn');if(b)b.classList.remove('show');});}
 
-// ── State ──────────────────────────────────────────────────────────
 function setState(p,sv=true){S={...S,...p};if(sv)save();render();}
 
-// ── Business ───────────────────────────────────────────────────────
-function addStudent(name,phone,email){setState({students:[...S.students,{id:uid(),name,phone,email,packages:[],createdAt:new Date().toISOString()}],modal:null});}
+// ── Business logic ─────────────────────────────────────────────────
+function addStudent(name,phone,email){
+  setState({students:[...S.students,{id:uid(),name,phone,email,packages:[],createdAt:new Date().toISOString()}],modal:null});
+}
+
+function deleteStudent(sid){
+  if(!confirm('¿Eliminar esta estudiante y todos sus datos? Esta acción no se puede deshacer.'))return;
+  setState({students:S.students.filter(s=>s.id!==sid),modal:null});
+}
 
 function addPackage(sid,pt){
   const pkg=PKG[pt],stu=S.students.find(s=>s.id===sid);
@@ -220,11 +233,16 @@ function addPackage(sid,pt){
   if(confirm(`Recibo ${r.folio} generado.\n¿Imprimir/PDF ahora?`))printReceipt(r);
 }
 
+function deletePackage(sid,pkgId){
+  if(!confirm('¿Eliminar este paquete?'))return;
+  setState({students:S.students.map(s=>s.id!==sid?s:{...s,packages:s.packages.filter(p=>p.id!==pkgId)}),modal:null});
+}
+
 function toggleAtt(ds,slotId,sid){
   const key=`${ds}_${slotId}`,cur=S.attendance[key]||[],isIn=cur.includes(sid);
   if(!isIn){
     const stu=S.students.find(s=>s.id===sid),pkg=stu?.packages.find(p=>p.remaining>0);
-    if(!pkg){alert(`${stu?.name} no tiene clases disponibles.`);return;}
+    if(!pkg){alert(`${stu?.name} no tiene clases disponibles.\nAgrégale un paquete primero.`);return;}
     setState({attendance:{...S.attendance,[key]:[...cur,sid]},students:S.students.map(s=>s.id!==sid?s:{...s,packages:s.packages.map(p=>p.id!==pkg.id?p:{...p,remaining:p.remaining-1})})});
   }else{
     const stu=S.students.find(s=>s.id===sid),pr=[...stu.packages].reverse().find(p=>p.remaining<p.total);
@@ -283,7 +301,14 @@ function el(tag,attrs={},ch=[]){
   return e;
 }
 const div=(cls,ch=[],a={})=>el('div',{class:cls,...a},ch);
-function mkBtn(label,onClick,s={}){const b=el('button',{onClick},[label]);Object.assign(b.style,{cursor:'pointer',border:'none',borderRadius:'8px',fontWeight:'700',fontFamily:"'Lato',sans-serif",...s});return b;}
+function mkBtn(label,onClick,s={}){
+  const b=el('button',{onClick},[label]);
+  Object.assign(b.style,{cursor:'pointer',border:'none',borderRadius:'8px',fontWeight:'700',fontFamily:"'Lato',sans-serif",...s});
+  return b;
+}
+function mkDangerBtn(label,onClick){
+  return mkBtn(label,onClick,{background:'var(--dangerBg)',color:'var(--danger)',padding:'8px 14px',fontSize:'11px',border:'1px solid #FFAAAA'});
+}
 
 // ── Render ─────────────────────────────────────────────────────────
 function render(){
@@ -320,7 +345,11 @@ function renderDashboard(){
   const ing=S.receipts.reduce((s,r)=>s+r.amount,0);
   const act=S.students.filter(s=>s.packages.some(p=>p.remaining>0)).length;
   const sg=div('stats-grid');
-  [{lbl:'Estudiantes',val:S.students.length,sub:`${act} activas`,c:'#C4856A'},{lbl:'Asistencias',val:att,sub:'registradas',c:'#8FAF8F'},{lbl:'Clases disp.',val:rem,sub:'por consumir',c:'#B8A9C9'},{lbl:'Ingresos',val:`$${ing.toLocaleString()}`,sub:'MXN',c:'#D4A96A'}].forEach(s=>{
+  [{lbl:'Estudiantes',val:S.students.length,sub:`${act} activas`,c:'#C4856A'},
+   {lbl:'Asistencias',val:att,sub:'registradas',c:'#8FAF8F'},
+   {lbl:'Clases disp.',val:rem,sub:'por consumir',c:'#B8A9C9'},
+   {lbl:'Ingresos',val:`$${ing.toLocaleString()}`,sub:'MXN',c:'#D4A96A'}
+  ].forEach(s=>{
     const c=div('card stat-card');
     c.appendChild(el('div',{class:'stat-label'},[s.lbl]));
     c.appendChild(el('div',{class:'stat-val',style:{color:s.c}},[String(s.val)]));
@@ -379,10 +408,14 @@ function renderStudents(){
     if(!s.packages.length)tags.appendChild(el('span',{class:'tag',style:{background:'#FFF0F0',color:'#AA4444',border:'1px solid #FFAAAA'}},['Sin paquete']));
     else s.packages.forEach(p=>tags.appendChild(el('span',{class:'tag',style:{background:p.remaining>0?'#F0F7F0':'#F5F5F5',color:p.remaining>0?'#4A7A4A':'var(--muted)',border:`1px solid ${p.remaining>0?'#8FAF8F':'#DDD'}`}},[`${p.label}: ${p.remaining}/${p.total}`])));
     info.appendChild(tags);
-    const right=el('div',{style:{textAlign:'right',flexShrink:'0'}});
+    const right=el('div',{style:{textAlign:'right',flexShrink:'0',display:'flex',flexDirection:'column',alignItems:'flex-end',gap:'6px'}});
     right.appendChild(el('div',{style:{fontFamily:"'Playfair Display',serif",fontSize:'28px',fontWeight:'700',color:rem>0?'var(--sec)':'var(--muted)'}},[String(rem)]));
     right.appendChild(el('div',{style:{fontSize:'10px',color:'var(--muted)'}},['clases']));
-    right.appendChild(mkBtn('+ Paquete',()=>setState({modal:`addPkg:${s.id}`},false),{marginTop:'8px',background:'var(--acc)',color:'var(--dark)',padding:'6px 14px',fontSize:'11px'}));
+    // Botones de acción
+    const actions=el('div',{style:{display:'flex',gap:'6px',marginTop:'4px'}});
+    actions.appendChild(mkBtn('✏️ Ver / Editar',()=>setState({modal:`stuDetail:${s.id}`},false),{background:'var(--acc)',color:'var(--dark)',padding:'6px 10px',fontSize:'11px'}));
+    actions.appendChild(mkBtn('+ Paquete',()=>setState({modal:`addPkg:${s.id}`},false),{background:'var(--pri)',color:'#fff',padding:'6px 10px',fontSize:'11px'}));
+    right.appendChild(actions);
     card.appendChild(av);card.appendChild(info);card.appendChild(right);list.appendChild(card);
   });
   wrap.appendChild(list);return wrap;
@@ -464,10 +497,13 @@ function renderReceipts(){
   wrap.appendChild(card);return wrap;
 }
 
+// ── Modals ─────────────────────────────────────────────────────────
 function renderModal(){
   const ov=div('overlay');
   ov.onclick=e=>{if(e.target===ov)setState({modal:null},false);};
   const xs={background:'none',border:'none',fontSize:'20px',cursor:'pointer',color:'var(--muted)',lineHeight:'1'};
+
+  // ── Nueva estudiante ──
   if(S.modal==='newStudent'){
     const box=div('modal-box');
     box.appendChild(div('modal-title',[el('span',{style:{fontFamily:"'Playfair Display',serif"}},['Nueva Estudiante']),mkBtn('✕',()=>setState({modal:null},false),xs)]));
@@ -484,11 +520,63 @@ function renderModal(){
     br.appendChild(mkBtn('Guardar',()=>{if(!name.trim()){ni.style.borderColor='#AA4444';ni.focus();return;}addStudent(name.trim(),phone.trim(),email.trim());},{flex:'2',background:'var(--pri)',color:'#fff',padding:'12px 0',fontSize:'12px'}));
     box.appendChild(br);ov.appendChild(box);
   }
+
+  // ── Detalle / editar estudiante ──
+  else if(S.modal?.startsWith('stuDetail:')){
+    const sid=S.modal.split(':')[1];
+    const stu=S.students.find(s=>s.id===sid);
+    if(!stu){setState({modal:null},false);return ov;}
+    const box=div('modal-box');
+    box.appendChild(div('modal-title',[
+      el('span',{style:{fontFamily:"'Playfair Display',serif"}},[stu.name]),
+      mkBtn('✕',()=>setState({modal:null},false),xs)
+    ]));
+    // Info
+    box.appendChild(el('div',{style:{fontSize:'12px',color:'var(--muted)',marginBottom:'16px'}},[
+      stu.phone?`📱 ${stu.phone}  `:' ',
+      stu.email?`✉️ ${stu.email}`:''
+    ]));
+
+    // Paquetes actuales
+    box.appendChild(el('div',{style:{fontSize:'10px',letterSpacing:'2px',textTransform:'uppercase',color:'var(--muted)',marginBottom:'8px'}},['Paquetes']));
+    if(!stu.packages.length){
+      box.appendChild(el('div',{style:{fontSize:'13px',color:'var(--muted)',marginBottom:'12px'}},['Sin paquetes asignados.']));
+    } else {
+      stu.packages.forEach(p=>{
+        const pct=Math.round((p.remaining/p.total)*100);
+        const row=div('pkg-row');
+        const info=el('div',{class:'pkg-row-info'});
+        info.appendChild(el('div',{class:'pkg-row-name'},[p.label]));
+        info.appendChild(el('div',{class:'pkg-row-sub'},[`${p.remaining} de ${p.total} clases restantes · Comprado: ${fmtDate(p.purchasedAt)}`]));
+        const barWrap=div('pkg-bar-wrap');
+        const bar=div('pkg-bar');
+        bar.style.width=`${pct}%`;
+        bar.style.background=p.remaining>0?'var(--sec)':'#DDD';
+        barWrap.appendChild(bar);info.appendChild(barWrap);
+        row.appendChild(info);
+        row.appendChild(mkDangerBtn('🗑',()=>deletePackage(sid,p.id)));
+        box.appendChild(row);
+      });
+    }
+
+    // Botón agregar nuevo paquete
+    const addPkgBtn=mkBtn('+ Agregar nuevo paquete',()=>setState({modal:`addPkg:${sid}`},false),{width:'100%',background:'var(--pri)',color:'#fff',padding:'12px 0',fontSize:'12px',marginTop:'8px'});
+    box.appendChild(addPkgBtn);
+
+    // Zona de peligro
+    const dz=div('danger-zone');
+    dz.appendChild(el('div',{class:'danger-title'},['⚠ Zona de riesgo']));
+    dz.appendChild(mkDangerBtn('🗑 Eliminar estudiante permanentemente',()=>deleteStudent(sid)));
+    box.appendChild(dz);
+    ov.appendChild(box);
+  }
+
+  // ── Agregar paquete ──
   else if(S.modal?.startsWith('addPkg:')){
     const sid=S.modal.split(':')[1],stu=S.students.find(s=>s.id===sid);
     const box=div('modal-box');
-    box.appendChild(div('modal-title',[el('span',{style:{fontFamily:"'Playfair Display',serif"}},['Agregar paquete']),mkBtn('✕',()=>setState({modal:null},false),xs)]));
-    box.appendChild(el('div',{style:{fontSize:'12px',color:'var(--muted)',marginBottom:'16px'}},[stu?.name||'']));
+    box.appendChild(div('modal-title',[el('span',{style:{fontFamily:"'Playfair Display',serif"}},['Nuevo paquete']),mkBtn('✕',()=>setState({modal:null},false),xs)]));
+    box.appendChild(el('div',{style:{fontSize:'12px',color:'var(--muted)',marginBottom:'16px'}},[`Para: ${stu?.name||''}`]));
     Object.entries(PKG).forEach(([k,p])=>{
       const opt=div('pkg-option');opt.style.borderColor=p.color;opt.onclick=()=>addPackage(sid,k);
       const info=el('div');
@@ -496,8 +584,12 @@ function renderModal(){
       info.appendChild(el('div',{class:'pkg-option-sub'},[`${p.classes} ${p.classes===1?'clase':'clases'}${p.classes>1?` · $${(p.price/p.classes).toFixed(0)}/clase`:''}`]));
       opt.appendChild(info);opt.appendChild(el('div',{class:'pkg-option-price',style:{color:p.color}},[`$${p.price}`]));box.appendChild(opt);
     });
+    // Botón regresar al detalle
+    box.appendChild(mkBtn('← Regresar',()=>setState({modal:`stuDetail:${sid}`},false),{background:'var(--acc)',color:'var(--dark)',padding:'10px 16px',fontSize:'11px',marginTop:'4px'}));
     ov.appendChild(box);
   }
+
+  // ── Clase / asistencia ──
   else if(S.modal?.startsWith('slot:')){
     const[,day,dk2,slotId]=S.modal.split(':'),slot=SLOTS.find(s=>s.id===slotId),ct=CM[day]?.[slotId];
     const att=S.attendance[`${dk2}_${slotId}`]||[];
@@ -526,7 +618,7 @@ function renderModal(){
   return ov;
 }
 
-if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
+if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
 </script>
 </body>
 </html>
