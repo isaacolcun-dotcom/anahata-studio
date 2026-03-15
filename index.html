@@ -465,13 +465,25 @@ function renderDashboard(){
 
   // Reportes rápidos
   wrap.appendChild(el('h3',{style:{fontFamily:"'Playfair Display',serif",fontSize:'18px',marginBottom:'14px'}},['Reportes']));
-  const rg=div('',[], {style:{display:'flex',gap:'12px',marginBottom:'26px',flexWrap:'wrap'}});
+  const rg=div('',[], {style:{display:'flex',gap:'12px',marginBottom:'26px',flexWrap:'wrap',alignItems:'center'}});
   const mkRepBtn=(label,type)=>{
     const b=mkBtn(label,()=>setState({report:{type,date:new Date().toISOString()}},false),{background:'var(--dark)',color:'#fff',padding:'13px 22px',fontSize:'12px',borderRadius:'10px'});
     return b;
   };
   rg.appendChild(mkRepBtn('📊 Reporte Semanal','week'));
   rg.appendChild(mkRepBtn('📈 Reporte Mensual','month'));
+
+  // Spacer
+  const spacer=el('div');spacer.style.flex='1';
+  rg.appendChild(spacer);
+
+  // Reset history button
+  const resetBtn=mkBtn('🗑 Borrar historial',()=>{
+    if(!confirm('¿Borrar TODO el historial?\n\nEsto eliminará:\n• Todos los recibos\n• Todas las asistencias\n• Todas las citas agendadas\n\nLas estudiantes y sus paquetes actuales NO se borran.\n\nEsta acción no se puede deshacer.'))return;
+    if(!confirm('¿Confirmas que deseas borrar el historial completo?\nEsta es tu última oportunidad de cancelar.'))return;
+    setState({receipts:[],attendance:{},appointments:{}});
+  },{background:'var(--dangerBg)',color:'var(--danger)',padding:'13px 18px',fontSize:'11px',borderRadius:'10px',border:'1px solid #FFAAAA'});
+  rg.appendChild(resetBtn);
   wrap.appendChild(rg);
 
   wrap.appendChild(el('h3',{style:{fontFamily:"'Playfair Display',serif",fontSize:'18px',marginBottom:'14px'}},['Paquetes disponibles']));
