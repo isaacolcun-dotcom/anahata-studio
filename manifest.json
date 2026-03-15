@@ -1,0 +1,41 @@
+{
+  "name": "Anahata — Gestión de Estudio",
+  "short_name": "Anahata",
+  "description": "Gestión de clases, estudiantes y recibos para Anahata Yoga & Pole Dance",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FAF6F1",
+  "theme_color": "#C4856A",
+  "orientation": "portrait-primary",
+  "lang": "es",
+  "categories": ["business", "productivity"],
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Calendario",
+      "short_name": "Calendario",
+      "description": "Ver el calendario semanal",
+      "url": "/?tab=calendar"
+    },
+    {
+      "name": "Estudiantes",
+      "short_name": "Estudiantes",
+      "description": "Gestionar estudiantes",
+      "url": "/?tab=students"
+    }
+  ]
+}
