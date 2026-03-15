@@ -1,5 +1,5 @@
 // Anahata Studio — Service Worker
-const CACHE = 'anahata-v2';
+const CACHE = 'anahata-v3';
 
 const PRECACHE = [
   '/',
