@@ -116,14 +116,14 @@ h1.pg{font-family:'Playfair Display',serif;font-size:26px;color:var(--dark);marg
 </style>
 </head>
 <body>
-
+ 
 <div id="loading-screen" class="loading-screen">
   <div class="spinner"></div>
   <div class="loading-lbl">ANAHATA</div>
   <div class="loading-sub" id="loading-msg">Conectando con Firebase...</div>
 </div>
 <div id="app" style="display:none;flex-direction:column;min-height:100vh"></div>
-
+ 
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <script>
@@ -138,7 +138,7 @@ firebase.initializeApp({
 });
 const db = firebase.firestore();
 db.enablePersistence({synchronizeTabs:true}).catch(()=>{});
-
+ 
 // ── Constantes ─────────────────────────────────────────────────────
 const PKG = {
   '12':{label:'12 Clases',   price:800,classes:12,color:'#8FAF8F'},
@@ -160,17 +160,17 @@ const CM={
   Vie: {s1:'yoga',s2:'yoga',s3:'pole',s4:'pole',s5:'yoga',s6:'yoga',s7:'pole',s8:'pole'},
   'Sáb':{s1:'yoga',s2:'yoga',s3:'pole',s4:'pole'}
 };
-
+ 
 const uid=()=>Math.random().toString(36).slice(2,9);
 const fmtDate=d=>new Date(d).toLocaleDateString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric'});
 const fmtLong=d=>new Date(d).toLocaleDateString('es-MX',{day:'2-digit',month:'long',year:'numeric'});
 const getMonday=d=>{const r=new Date(d),w=r.getDay();r.setDate(r.getDate()-(w===0?6:w-1));r.setHours(0,0,0,0);return r};
 const addDays=(d,n)=>{const r=new Date(d);r.setDate(r.getDate()+n);return r};
 const dKey=d=>d.toISOString().slice(0,10);
-
+ 
 let S={tab:'dashboard',students:[],attendance:{},receipts:[],weekStart:getMonday(new Date()),modal:null};
 let saveT=null,remoteUpd=false;
-
+ 
 // ── Firestore ──────────────────────────────────────────────────────
 db.collection('estudio').doc('principal').onSnapshot(snap=>{
   document.getElementById('loading-screen').style.display='none';
@@ -186,7 +186,7 @@ db.collection('estudio').doc('principal').onSnapshot(snap=>{
   document.getElementById('loading-msg').textContent='Error de conexión, reintentando...';
   setTimeout(()=>location.reload(),4000);
 });
-
+ 
 function save(){
   if(remoteUpd)return;
   if(saveT)clearTimeout(saveT);
@@ -208,23 +208,23 @@ function setStatus(t){
 }
 window.addEventListener('online',()=>setStatus('online'));
 window.addEventListener('offline',()=>setStatus('offline'));
-
+ 
 let dp=null;
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();dp=e;const b=document.getElementById('install-btn');if(b)b.classList.add('show');});
 function installApp(){if(!dp)return;dp.prompt();dp.userChoice.then(()=>{dp=null;const b=document.getElementById('install-btn');if(b)b.classList.remove('show');});}
-
+ 
 function setState(p,sv=true){S={...S,...p};if(sv)save();render();}
-
+ 
 // ── Business logic ─────────────────────────────────────────────────
 function addStudent(name,phone,email){
   setState({students:[...S.students,{id:uid(),name,phone,email,packages:[],createdAt:new Date().toISOString()}],modal:null});
 }
-
+ 
 function deleteStudent(sid){
   if(!confirm('¿Eliminar esta estudiante y todos sus datos? Esta acción no se puede deshacer.'))return;
   setState({students:S.students.filter(s=>s.id!==sid),modal:null});
 }
-
+ 
 function addPackage(sid,pt){
   const pkg=PKG[pt],stu=S.students.find(s=>s.id===sid);
   const np={id:uid(),type:pt,label:pkg.label,total:pkg.classes,remaining:pkg.classes,price:pkg.price,purchasedAt:new Date().toISOString()};
@@ -232,12 +232,12 @@ function addPackage(sid,pt){
   setState({students:S.students.map(s=>s.id!==sid?s:{...s,packages:[...s.packages,np]}),receipts:[r,...S.receipts],modal:null});
   if(confirm(`Recibo ${r.folio} generado.\n¿Imprimir/PDF ahora?`))printReceipt(r);
 }
-
+ 
 function deletePackage(sid,pkgId){
   if(!confirm('¿Eliminar este paquete?'))return;
   setState({students:S.students.map(s=>s.id!==sid?s:{...s,packages:s.packages.filter(p=>p.id!==pkgId)}),modal:null});
 }
-
+ 
 function toggleAtt(ds,slotId,sid){
   const key=`${ds}_${slotId}`,cur=S.attendance[key]||[],isIn=cur.includes(sid);
   if(!isIn){
@@ -249,7 +249,7 @@ function toggleAtt(ds,slotId,sid){
     setState({attendance:{...S.attendance,[key]:cur.filter(id=>id!==sid)},students:!pr?S.students:S.students.map(s=>s.id!==sid?s:{...s,packages:s.packages.map(p=>p.id!==pr.id?p:{...p,remaining:Math.min(p.remaining+1,p.total)})})});
   }
 }
-
+ 
 // ── Receipt ────────────────────────────────────────────────────────
 function printReceipt(r){
   const w=window.open('','_blank','width=600,height=820');
@@ -287,7 +287,7 @@ hr{border:none;border-top:1px solid #E8D5C4;margin:20px 0}
 </div></body></html>`);
   w.document.close();setTimeout(()=>{w.focus();w.print();},700);
 }
-
+ 
 // ── DOM helpers ────────────────────────────────────────────────────
 function el(tag,attrs={},ch=[]){
   const e=document.createElement(tag);
@@ -309,7 +309,7 @@ function mkBtn(label,onClick,s={}){
 function mkDangerBtn(label,onClick){
   return mkBtn(label,onClick,{background:'var(--dangerBg)',color:'var(--danger)',padding:'8px 14px',fontSize:'11px',border:'1px solid #FFAAAA'});
 }
-
+ 
 // ── Render ─────────────────────────────────────────────────────────
 function render(){
   const app=document.getElementById('app');if(!app)return;
@@ -322,7 +322,7 @@ function render(){
   app.appendChild(main);
   if(S.modal)app.appendChild(renderModal());
 }
-
+ 
 function renderHeader(){
   const h=el('header');
   h.appendChild(div('logo-area',[el('div',{class:'logo-name'},['ANAHATA']),el('div',{class:'logo-sub'},['Yoga & Pole Dance'])]));
@@ -336,7 +336,7 @@ function renderHeader(){
   right.appendChild(el('button',{id:'install-btn',onClick:installApp},['⬇ Instalar']));
   h.appendChild(right);return h;
 }
-
+ 
 function renderDashboard(){
   const wrap=div('fade');
   wrap.appendChild(el('h1',{class:'pg'},['Panel de Control']));
@@ -384,7 +384,7 @@ function renderDashboard(){
   }
   return wrap;
 }
-
+ 
 function renderStudents(){
   const wrap=div('fade');
   const top=div('',[], {style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'20px'}});
@@ -420,7 +420,7 @@ function renderStudents(){
   });
   wrap.appendChild(list);return wrap;
 }
-
+ 
 function renderCalendar(){
   const wrap=div('fade');
   const wd=DAYS.map((_,i)=>addDays(S.weekStart,i)),tk=dKey(new Date());
@@ -473,7 +473,7 @@ function renderCalendar(){
   leg.appendChild(el('div',{class:'leg-item'},[el('span',[],[' ✦ Clic en clase para registrar asistencia'])]));
   wrap.appendChild(leg);return wrap;
 }
-
+ 
 function renderReceipts(){
   const wrap=div('fade');
   wrap.appendChild(el('h1',{class:'pg'},['Recibos']));
@@ -496,13 +496,13 @@ function renderReceipts(){
   });
   wrap.appendChild(card);return wrap;
 }
-
+ 
 // ── Modals ─────────────────────────────────────────────────────────
 function renderModal(){
   const ov=div('overlay');
   ov.onclick=e=>{if(e.target===ov)setState({modal:null},false);};
   const xs={background:'none',border:'none',fontSize:'20px',cursor:'pointer',color:'var(--muted)',lineHeight:'1'};
-
+ 
   // ── Nueva estudiante ──
   if(S.modal==='newStudent'){
     const box=div('modal-box');
@@ -520,7 +520,7 @@ function renderModal(){
     br.appendChild(mkBtn('Guardar',()=>{if(!name.trim()){ni.style.borderColor='#AA4444';ni.focus();return;}addStudent(name.trim(),phone.trim(),email.trim());},{flex:'2',background:'var(--pri)',color:'#fff',padding:'12px 0',fontSize:'12px'}));
     box.appendChild(br);ov.appendChild(box);
   }
-
+ 
   // ── Detalle / editar estudiante ──
   else if(S.modal?.startsWith('stuDetail:')){
     const sid=S.modal.split(':')[1];
@@ -536,7 +536,7 @@ function renderModal(){
       stu.phone?`📱 ${stu.phone}  `:' ',
       stu.email?`✉️ ${stu.email}`:''
     ]));
-
+ 
     // Paquetes actuales
     box.appendChild(el('div',{style:{fontSize:'10px',letterSpacing:'2px',textTransform:'uppercase',color:'var(--muted)',marginBottom:'8px'}},['Paquetes']));
     if(!stu.packages.length){
@@ -558,11 +558,11 @@ function renderModal(){
         box.appendChild(row);
       });
     }
-
+ 
     // Botón agregar nuevo paquete
     const addPkgBtn=mkBtn('+ Agregar nuevo paquete',()=>setState({modal:`addPkg:${sid}`},false),{width:'100%',background:'var(--pri)',color:'#fff',padding:'12px 0',fontSize:'12px',marginTop:'8px'});
     box.appendChild(addPkgBtn);
-
+ 
     // Zona de peligro
     const dz=div('danger-zone');
     dz.appendChild(el('div',{class:'danger-title'},['⚠ Zona de riesgo']));
@@ -570,7 +570,7 @@ function renderModal(){
     box.appendChild(dz);
     ov.appendChild(box);
   }
-
+ 
   // ── Agregar paquete ──
   else if(S.modal?.startsWith('addPkg:')){
     const sid=S.modal.split(':')[1],stu=S.students.find(s=>s.id===sid);
@@ -588,7 +588,7 @@ function renderModal(){
     box.appendChild(mkBtn('← Regresar',()=>setState({modal:`stuDetail:${sid}`},false),{background:'var(--acc)',color:'var(--dark)',padding:'10px 16px',fontSize:'11px',marginTop:'4px'}));
     ov.appendChild(box);
   }
-
+ 
   // ── Clase / asistencia ──
   else if(S.modal?.startsWith('slot:')){
     const[,day,dk2,slotId]=S.modal.split(':'),slot=SLOTS.find(s=>s.id===slotId),ct=CM[day]?.[slotId];
@@ -617,7 +617,7 @@ function renderModal(){
   }
   return ov;
 }
-
+ 
 if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
 </script>
 </body>
