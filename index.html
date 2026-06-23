@@ -158,24 +158,24 @@ main{flex:1;padding:24px;max-width:1140px;margin:0 auto;width:100%}
  
 /* ── Calendar ── */
 .cal-header{display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap}
-.week-nav{display:flex;align-items:center;gap:8px}
+.week-nav{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .week-lbl{font-size:13px;color:var(--muted);min-width:220px;text-align:center;font-weight:500}
 .cal-table{width:100%;border-collapse:separate;border-spacing:3px 3px;font-size:12px}
 .cal-th{padding:10px 6px;text-align:center;font-weight:600;font-size:10px;color:var(--dark2);letter-spacing:.5px;text-transform:uppercase}
 .cal-th.today{color:var(--pri)}
 .time-cell{font-size:10px;color:var(--muted);font-weight:600;white-space:nowrap;padding:3px 8px;vertical-align:middle}
-.class-cell{border-radius:var(--r-sm);padding:6px 7px;cursor:pointer;transition:all .18s;min-height:54px;border:1px solid transparent;position:relative}
+.class-cell{border-radius:var(--r-sm);padding:5px 5px 4px;cursor:pointer;transition:all .18s;min-height:52px;border:1px solid transparent;position:relative;display:flex;flex-direction:column;gap:2px}
 .class-cell:hover{transform:scale(1.025);box-shadow:0 4px 12px rgba(0,0,0,.1)}
 .class-cell.yoga{background:var(--yoga-bg);border-color:var(--yoga-bd)}
 .class-cell.pole{background:var(--pole-bg);border-color:var(--pole-bd)}
-.class-type{font-size:8px;font-weight:700;letter-spacing:1px;text-transform:uppercase}
+.class-type{font-size:7px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;line-height:1.2}
 .class-cell.yoga .class-type{color:var(--pri)}
 .class-cell.pole .class-type{color:var(--sec-dark)}
-.att-dots{display:flex;flex-wrap:wrap;gap:2px;margin-top:3px}
-.att-dot{width:16px;height:16px;border-radius:50%;background:var(--pri);color:#fff;font-size:7px;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0}
+.cupo-badge{font-size:7px;color:var(--muted);font-weight:700;line-height:1}
+.att-dots{display:flex;flex-wrap:wrap;gap:2px}
+.att-dot{width:14px;height:14px;border-radius:50%;background:var(--pri);color:#fff;font-size:6px;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0}
 .att-dot.confirmed{background:var(--sec)}
 .att-dot.appt{background:var(--acc);color:var(--dark2);border:1px solid var(--pri)}
-.cupo-badge{position:absolute;top:4px;right:5px;font-size:7px;color:var(--muted);font-weight:700}
 .empty-cell{background:#F5F0EB;border-radius:var(--r-sm);opacity:.25}
 .break-row td{padding:6px 0;text-align:center;font-size:9px;letter-spacing:3px;color:var(--muted);text-transform:uppercase}
  
@@ -741,14 +741,18 @@ function renderDashboard(){
   // Today's classes
   const todayCard=div('card card-inner');
   todayCard.appendChild(el('div',{class:'section-eyebrow'},['Clases hoy']));
-  const todayDay=DAYS[now.getDay()===0?5:now.getDay()-1];
-  const todaySlots=CM[todayDay]?Object.entries(CM[todayDay]):[];
+  // getDay(): 0=Dom,1=Lun,2=Mar,3=Mié,4=Jue,5=Vie,6=Sáb
+  const dayMap={1:'Lun',2:'Mar',3:'Mié',4:'Jue',5:'Vie',6:'Sáb'};
+  const todayDay=dayMap[now.getDay()]||null;
+  const activeCMdash=S.schedule||DEFAULT_CM;
+  const todaySlots=todayDay&&activeCMdash[todayDay]?Object.entries(activeCMdash[todayDay]):[];
   if(!todaySlots.length){
     todayCard.appendChild(el('div',{style:{fontSize:'12px',color:'var(--muted)',marginTop:'10px'}},['Sin clases hoy']));
   } else {
     const todayDk=dKey(now);
+    const activeSlotsDash=S.slots||DEFAULT_SLOTS;
     todaySlots.slice(0,4).forEach(([sid,type])=>{
-      const slot=SLOTS.find(s=>s.id===sid);
+      const slot=activeSlotsDash.find(s=>s.id===sid);
       const ak=`${todayDk}_${sid}`;
       const appts=S.appointments[ak]||[];
       const conf=appts.filter(a=>a.confirmed).length;
@@ -964,7 +968,14 @@ function renderCalendar(){
       else{
         const cc=div(`class-cell ${ct}`);
         cc.onclick=()=>setState({modal:`slot:${day}:${dk2}:${slot.id}`},false);
-        cc.appendChild(el('div',{class:'class-type'},[ct==='yoga'?'YOGA':'POLE']));
+        // Top row: type label + cupo
+        const topRow=el('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:'2px'}});
+        topRow.appendChild(el('div',{class:'class-type'},[ct==='yoga'?'YOGA':'POLE']));
+        const cupo=div('cupo-badge');
+        cupo.textContent=`${appts.length}/${MAX_CUPO}`;
+        cupo.style.color=appts.length>=MAX_CUPO?'var(--danger)':appts.length>0?'var(--pri)':'var(--muted)';
+        topRow.appendChild(cupo);
+        cc.appendChild(topRow);
         if(appts.length){
           const dots=div('att-dots');
           appts.slice(0,6).forEach(a=>{
@@ -973,12 +984,9 @@ function renderCalendar(){
             d.title=`${a.studentName}${a.confirmed?' ✓':''}`;
             dots.appendChild(d);
           });
-          if(appts.length>6)dots.appendChild(el('span',{style:{fontSize:'8px',color:'var(--muted)'}},[ `+${appts.length-6}` ]));
+          if(appts.length>6)dots.appendChild(el('span',{style:{fontSize:'7px',color:'var(--muted)'}},[ `+${appts.length-6}` ]));
           cc.appendChild(dots);
         }
-        const cupo=div('cupo-badge');cupo.textContent=`${appts.length}/${MAX_CUPO}`;
-        cupo.style.color=appts.length>=MAX_CUPO?'var(--danger)':appts.length>0?'var(--pri)':'var(--muted)';
-        cc.appendChild(cupo);
         td.appendChild(cc);
       }
       row.appendChild(td);
